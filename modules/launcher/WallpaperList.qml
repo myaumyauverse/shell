@@ -10,6 +10,8 @@ import qs.services
 PathView {
     id: root
 
+    property bool showAnimated: false
+
     required property SearchBar search
     required property var screenState
     required property var panels
@@ -49,8 +51,13 @@ PathView {
 
         readonly property string search: root.search.text.split(" ").slice(1).join(" ")
 
-        values: Wallpapers.query(search)
-        onValuesChanged: root.currentIndex = search ? 0 : values.findIndex(w => w.path === Wallpapers.actualCurrent)
+        values: Wallpapers.query(search).filter(w =>
+            root.showAnimated ? Wallpapers.isVideo(w.path) : !Wallpapers.isVideo(w.path)
+        )
+
+        onValuesChanged: root.currentIndex = search
+            ? 0
+            : values.findIndex(w => w.path === Wallpapers.actualCurrent)
     }
 
     Component.onCompleted: currentIndex = Wallpapers.list.findIndex(w => w.path === Wallpapers.actualCurrent)

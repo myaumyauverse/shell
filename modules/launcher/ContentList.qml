@@ -19,7 +19,9 @@ Item {
     required property int padding
     required property int rounding
 
-    readonly property bool showWallpapers: search.text.startsWith(`${GlobalConfig.launcher.actionPrefix}wallpaper `)
+    readonly property bool showWallpapers:
+        search.text === `${GlobalConfig.launcher.actionPrefix}wallpaper`
+        || search.text.startsWith(`${GlobalConfig.launcher.actionPrefix}wallpaper `)
     readonly property var currentList: showWallpapers ? wallpaperList.item : appList.item // Can be either ListView or PathView, so can't type properly
     property string animState: showWallpapers ? "wallpapers" : "apps"
 
@@ -49,7 +51,7 @@ Item {
 
             PropertyChanges {
                 root.implicitWidth: Math.max(root.Tokens.sizes.launcher.itemWidth * 1.2, wallpaperList.implicitWidth)
-                root.implicitHeight: root.Tokens.sizes.launcher.wallpaperHeight
+                root.implicitHeight: root.Tokens.sizes.launcher.wallpaperHeight + 44
                 wallpaperList.active: true
             }
         }
@@ -97,8 +99,9 @@ Item {
         active: false
 
         anchors.top: parent.top
-        anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
+
+        height: Tokens.sizes.launcher.wallpaperHeight
 
         sourceComponent: WallpaperList {
             objectName: "launcherWallpaperList"
@@ -107,6 +110,91 @@ Item {
             screenState: root.screenState
             panels: root.panels
             content: root.content
+        }
+    }
+
+    Row {
+        id: categorySwitcher
+
+        z: 10
+
+        visible: root.showWallpapers
+        enabled: visible
+
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+
+        spacing: 2
+        padding: 3
+
+        Rectangle {
+            implicitWidth: picturesText.implicitWidth + 32
+            implicitHeight: 32
+            radius: 16
+
+            color: !wallpaperList.item?.showAnimated
+                ? Colours.palette.m3primary
+                : Colours.palette.m3surfaceContainerHighest
+
+            Text {
+                id: picturesText
+
+                anchors.centerIn: parent
+                text: "Pictures"
+
+                color: !wallpaperList.item?.showAnimated
+                    ? Colours.palette.m3onPrimary
+                    : Colours.palette.m3onSurface
+
+                font.pixelSize: 13
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+
+                onClicked: {
+                    if (wallpaperList.item) {
+                        wallpaperList.item.showAnimated = false;
+                        wallpaperList.item.currentIndex = 0;
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            implicitWidth: animatedText.implicitWidth + 32
+            implicitHeight: 32
+            radius: 16
+
+            color: wallpaperList.item?.showAnimated
+                ? Colours.palette.m3primary
+                : Colours.palette.m3surfaceContainerHighest
+
+            Text {
+                id: animatedText
+
+                anchors.centerIn: parent
+                text: "Animated"
+
+                color: wallpaperList.item?.showAnimated
+                    ? Colours.palette.m3onPrimary
+                    : Colours.palette.m3onSurface
+
+                font.pixelSize: 13
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+
+                onClicked: {
+                    if (wallpaperList.item) {
+                        wallpaperList.item.showAnimated = true;
+                        wallpaperList.item.currentIndex = 0;
+                    }
+                }
+            }
         }
     }
 

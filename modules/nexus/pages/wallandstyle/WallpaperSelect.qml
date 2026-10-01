@@ -5,8 +5,6 @@ import QtQuick.Layouts
 import Quickshell
 import Caelestia.Components
 import Caelestia.Config
-import Caelestia.I18n
-import Caelestia.Models
 import qs.components
 import qs.components.controls
 import qs.components.filedialog
@@ -17,7 +15,7 @@ import qs.modules.nexus.common
 PageBase {
     id: root
 
-    title: Tr.tr("Wallpapers")
+    title: qsTr("Wallpapers")
     isSubPage: true
 
     ColumnLayout {
@@ -33,7 +31,7 @@ PageBase {
 
             IconTextButton {
                 icon: "photo_library"
-                text: Tr.tr("Browse")
+                text: qsTr("Browse")
                 font: Tokens.font.body.large
                 isRound: true
                 shapeMorph: true
@@ -44,8 +42,8 @@ PageBase {
                 FileDialog {
                     id: browseDialog
 
-                    title: Tr.tr("Select an image")
-                    filterLabel: Tr.tr("Image files")
+                    title: qsTr("Select an image")
+                    filterLabel: qsTr("Image files")
                     filters: Images.validImageExtensions
                     onAccepted: path => {
                         Wallpapers.setWallpaper(path);
@@ -56,7 +54,7 @@ PageBase {
 
             IconTextButton {
                 icon: "shuffle"
-                text: Tr.tr("Random")
+                text: qsTr("Random")
                 font: Tokens.font.body.large
                 isRound: true
                 shapeMorph: true
@@ -74,7 +72,7 @@ PageBase {
             imgHeight: Math.round(width * 0.3)
             radius: Tokens.rounding.extraLarge
             source: Quickshell.shellPath("assets/wallpaper.webp")
-            text: Tr.tr("Featured wallpaper")
+            text: qsTr("Featured wallpaper")
             fillLabel: false
             onClicked: {
                 Wallpapers.setWallpaper(Quickshell.shellPath("assets/wallpaper.webp"));
@@ -84,7 +82,7 @@ PageBase {
 
         StyledText {
             Layout.topMargin: Tokens.spacing.large
-            text: Tr.tr("Local wallpapers")
+            text: qsTr("Local wallpapers")
             font: Tokens.font.title.small
         }
 
@@ -106,7 +104,7 @@ PageBase {
                     const list = [];
                     for (const w of walls) {
                         if (w.parentDir !== baseDir) {
-                            const category = Wallpapers.getCategoryFor(w);
+                            const category = Wallpapers.getCategoryFor(w.path);
                             if (category && (!(category in categories) || categories[category].name.localeCompare(w.name) > 0))
                                 categories[category] = w;
                         } else {
@@ -121,27 +119,30 @@ PageBase {
                 }
 
                 WallItem {
-                    required property FileSystemEntry modelData
+                    required property QtObject modelData
 
-                    // Empty placeholders for sizing
                     opacity: modelData ? 1 : 0
                     enabled: modelData
-
-                    source: String(modelData?.path ?? "")
+                    source: {
+                        if (!modelData) return "";
+                        const thumb = Wallpapers.getThumbnailPath(modelData.path);
+                        if (!thumb) return "";
+                        return "file://" + thumb + "?v=" + Wallpapers.thumbnailVersion;
+                    }
                     text: {
                         if (!modelData)
                             return "";
 
                         if (modelData.parentDir !== Paths.wallsdir) {
-                            const category = Wallpapers.getCategoryFor(modelData);
+                            const category = Wallpapers.getCategoryFor(modelData.path);
                             return category.slice(0, 1).toUpperCase() + category.slice(1);
                         }
                         return modelData.name;
                     }
                     onClicked: {
                         if (modelData.parentDir !== Paths.wallsdir) {
-                            root.nState.selectedWallpaperCategory = Wallpapers.getCategoryFor(modelData);
-                            root.nState.openSubPage(2); // Category page
+                            root.nState.selectedWallpaperCategory = Wallpapers.getCategoryFor(modelData.path);
+                            root.nState.openSubPage(2);
                         } else {
                             Wallpapers.setWallpaper(modelData.path);
                             root.nState.closeSubPage();
@@ -178,7 +179,7 @@ PageBase {
 
                     StyledText {
                         Layout.alignment: Qt.AlignHCenter
-                        text: Tr.tr("No local wallpapers found")
+                        text: qsTr("No local wallpapers found")
                         color: Colours.palette.m3outline
                         font: Tokens.font.title.small
                     }
